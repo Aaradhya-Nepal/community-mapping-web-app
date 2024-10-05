@@ -1,8 +1,8 @@
-import axios from 'axios'
 import config from "@/config"
+import axios from "axios";
 
-export const getAll = async ({lat, lon}: any) => {
-    const url = `${config.OPEN_WEATHER_API_URL}?lat=${lat}&lon=${lon}&appid=${config.OPEN_WEATHER_API_KEY}&units=metric`
-    const response = await axios.get(url)
+export const getAll = async ({ latitude, longitude }: any) => {
+    const url = `${config.OPEN_METEO_API_URL}?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,rain,relative_humidity_2m,wind_speed_10m,cloudcover`;
+    const response = await axios.get(url);
     return response.data;
-}
+};
