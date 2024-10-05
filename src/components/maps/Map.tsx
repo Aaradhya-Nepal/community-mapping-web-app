@@ -1,11 +1,35 @@
 "use client";
 
 import {useCallback, useEffect, useRef, useState} from "react"
-import {GoogleMap, InfoWindow, Marker, useJsApiLoader} from "@react-google-maps/api"
+import {Circle, GoogleMap, InfoWindow, Marker, useJsApiLoader} from "@react-google-maps/api"
 import {useGetGeocode} from "@/queries/geocode"
 import Loader from "@/components/loader/Loader"
 import Header from "@/components/maps/Header"
 import {libraries, mapProperties} from "@/components/maps/map-properties";
+import {useGetFloodData} from "@/queries/flood";
+
+const calculateFloodRisk = (floodData: any) => {
+    const riskAreas = floodData.daily.time.map((date: string, index: number) => {
+        const discharge = floodData.daily.river_discharge_seamless_v4[index];
+        let riskLevel = "low";
+
+        if (discharge > 10) {
+            riskLevel = "high";
+        } else if (discharge > 5) {
+            riskLevel = "medium";
+        }
+
+        return {
+            date,
+            discharge,
+            riskLevel,
+            center: { lat: floodData.latitude, lng: floodData.longitude },
+            radius: discharge * 100
+        };
+    });
+
+    return riskAreas;
+};
 
 export default function Map() {
     const [map, setMap] = useState<google.maps.Map | null>(null)
@@ -24,7 +48,10 @@ export default function Map() {
     })
 
     const {data: geocodeData} = useGetGeocode(searchAddress, !!searchAddress)
-    // const {data: floodData, refetch: refetchFloodData} = useGetFloodData()
+    const {data: floodData} = useGetFloodData({
+        latitude: userLocation?.lat ?? '27.7172',
+        longitude: userLocation?.lng ?? '85.3240'
+    })
 
     const onLoad = useCallback((map: google.maps.Map) => {
         mapRef.current = map
@@ -94,6 +121,8 @@ export default function Map() {
         return <Loader/>
     }
 
+    const riskAreas = floodData && floodData ? calculateFloodRisk(floodData) : [];
+
     return (
         <div className="h-screen flex flex-col">
             <div className="flex-1 relative">
@@ -119,19 +148,19 @@ export default function Map() {
                             }}
                         />
                     ))}
-                    {/*{floodData && floodData.map((area: any, index: number) => (*/}
-                    {/*    <Circle*/}
-                    {/*        key={index}*/}
-                    {/*        center={area.center}*/}
-                    {/*        radius={area.radius}*/}
-                    {/*        options={{*/}
-                    {/*            fillColor: 'rgba(255, 0, 0, 0.35)',*/}
-                    {/*            fillOpacity: 0.35,*/}
-                    {/*            strokeColor: 'rgba(255, 0, 0, 0.8)',*/}
-                    {/*            strokeWeight: 1,*/}
-                    {/*        }}*/}
-                    {/*    />*/}
-                    {/*))}*/}
+                    {riskAreas.map((area, index) => (
+                        <Circle
+                            key={index}
+                            center={area.center}
+                            radius={area.radius}
+                            options={{
+                                fillColor: area.riskLevel === "high" ? 'rgba(255, 0, 0, 0.35)' : area.riskLevel === "medium" ? 'rgba(255, 165, 0, 0.35)' : 'rgba(0, 255, 0, 0.35)',
+                                fillOpacity: 0.35,
+                                strokeColor: area.riskLevel === "high" ? 'rgba(255, 0, 0, 0.8)' : area.riskLevel === "medium" ? 'rgba(255, 165, 0, 0.8)' : 'rgba(0, 255, 0, 0.8)',
+                                strokeWeight: 1,
+                            }}
+                        />
+                    ))}
                     {selectedPlace && selectedPlace.geometry?.location && (
                         <InfoWindow
                             position={selectedPlace.geometry.location as google.maps.LatLng}
