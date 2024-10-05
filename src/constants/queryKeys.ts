@@ -1,5 +1,7 @@
 const QUERY_KEYS = {
     places: 'places',
-    geocode: 'geocode',
+    geocodes: 'geocodes',
+    floods: 'floods',
+    weathers: 'weathers',
 };
 export default QUERY_KEYS;
