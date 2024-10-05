@@ -1,6 +1,6 @@
-import {useQuery} from "react-query";
-import QUERY_KEYS from "@/constants/queryKeys";
-import {getAll} from "@/api/geocode";
+import {useQuery} from "react-query"
+import QUERY_KEYS from "@/constants/queryKeys"
+import {getAll} from "@/api/geocode"
 
 export function useGetGeocode(address: string, enabled = true) {
     return useQuery({
@@ -9,5 +9,5 @@ export function useGetGeocode(address: string, enabled = true) {
         retry: false,
         keepPreviousData: true,
         enabled: enabled,
-    });
+    })
 }

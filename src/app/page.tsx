@@ -1,15 +1,7 @@
-"use client";
-import MapInterface from "@/components/maps/MapInterface";
-import {useGetGeocode} from "@/queries/geocode";
+import Map from "@/components/maps/Map";
 
-export default function Home() {
-    const address = '1600 Amphitheatre Parkway, Mountain View, CA';
-    const {data: geocodes} = useGetGeocode(address);
-    console.log(geocodes)
-
+export default function Page() {
     return (
-        <>
-            <MapInterface/>
-        </>
+        <Map/>
     );
 }
