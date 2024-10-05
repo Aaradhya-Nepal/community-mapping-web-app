@@ -7,9 +7,10 @@ import Loader from "@/components/loader/Loader"
 import Header from "@/components/maps/Header"
 import {libraries, mapProperties} from "@/components/maps/map-properties";
 import {useGetFloodData} from "@/queries/flood";
+import Image from "next/image";
 
 const calculateFloodRisk = (floodData: any) => {
-    const riskAreas = floodData.daily.time.map((date: string, index: number) => {
+    return floodData.daily.time.map((date: string, index: number) => {
         const discharge = floodData.daily.river_discharge_seamless_v4[index];
         let riskLevel = "low";
 
@@ -23,12 +24,10 @@ const calculateFloodRisk = (floodData: any) => {
             date,
             discharge,
             riskLevel,
-            center: { lat: floodData.latitude, lng: floodData.longitude },
+            center: {lat: floodData.latitude, lng: floodData.longitude},
             radius: discharge * 100
         };
     });
-
-    return riskAreas;
 };
 
 export default function Map() {
@@ -148,7 +147,7 @@ export default function Map() {
                             }}
                         />
                     ))}
-                    {riskAreas.map((area, index) => (
+                    {riskAreas.map((area: any, index: number) => (
                         <Circle
                             key={index}
                             center={area.center}
@@ -168,7 +167,7 @@ export default function Map() {
                         >
                             <div>
                                 {selectedPlace.photos && selectedPlace.photos.length > 0 && (
-                                    <img
+                                    <Image
                                         src={selectedPlace.photos[0].getUrl({maxWidth: 200, maxHeight: 200})}
                                         alt={selectedPlace.name}
                                         className="mb-2"
