@@ -9,13 +9,13 @@ import {AlertTriangle, Waves} from "lucide-react";
 import FloodInfo from "@/components/maps/FloodInfo";
 import WeatherInfo from "@/components/maps/WeatherInfo";
 
-const Header = ({setSearchAddress, places, refetchFloodData, userLocation}: any) => {
+const Header = ({setSearchAddress, places, refetchFloodData, userLocation, onPlaceClick}: any) => {
     const [floodAreas] = useState<{ center: google.maps.LatLngLiteral, radius: number }[]>([])
     return (
         <>
             <Card className="w-80 absolute top-4 left-4">
                 <SearchBar onSearch={setSearchAddress}/>
-                {places && (<PlacesList places={places}/>)}
+                {places && (<PlacesList places={places} onPlaceClick={onPlaceClick}/>)}
             </Card>
             <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
                 <div className="flex gap-2 w-[300px]">

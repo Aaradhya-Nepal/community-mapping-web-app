@@ -1,9 +1,8 @@
 "use client";
 
 import {useCallback, useEffect, useRef, useState} from "react"
-import {Circle, GoogleMap, Marker, useJsApiLoader} from "@react-google-maps/api"
+import {GoogleMap, InfoWindow, Marker, useJsApiLoader} from "@react-google-maps/api"
 import {useGetGeocode} from "@/queries/geocode"
-import {useGetFloodData} from "@/queries/flood"
 import Loader from "@/components/loader/Loader"
 import Header from "@/components/maps/Header"
 import {libraries, mapProperties} from "@/components/maps/map-properties";
@@ -13,6 +12,7 @@ export default function Map() {
     const [places, setPlaces] = useState<google.maps.places.PlaceResult[]>([])
     const [searchAddress, setSearchAddress] = useState("")
     const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null)
+    const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
 
     const mapRef = useRef<google.maps.Map>()
     const placesServiceRef = useRef<google.maps.places.PlacesService>()
@@ -24,7 +24,7 @@ export default function Map() {
     })
 
     const {data: geocodeData} = useGetGeocode(searchAddress, !!searchAddress)
-    const {data: floodData, refetch: refetchFloodData} = useGetFloodData()
+    // const {data: floodData, refetch: refetchFloodData} = useGetFloodData()
 
     const onLoad = useCallback((map: google.maps.Map) => {
         mapRef.current = map
@@ -50,6 +50,11 @@ export default function Map() {
             });
         });
     }, [userLocation]);
+
+    const handlePlaceClick = (place: google.maps.places.PlaceResult) => {
+        setSelectedPlace(place);
+        map?.panTo(place.geometry?.location!);
+    };
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -114,22 +119,41 @@ export default function Map() {
                             }}
                         />
                     ))}
-                    {floodData && floodData.map((area: any, index: number) => (
-                        <Circle
-                            key={index}
-                            center={area.center}
-                            radius={area.radius}
-                            options={{
-                                fillColor: 'rgba(255, 0, 0, 0.35)',
-                                fillOpacity: 0.35,
-                                strokeColor: 'rgba(255, 0, 0, 0.8)',
-                                strokeWeight: 1,
-                            }}
-                        />
-                    ))}
+                    {/*{floodData && floodData.map((area: any, index: number) => (*/}
+                    {/*    <Circle*/}
+                    {/*        key={index}*/}
+                    {/*        center={area.center}*/}
+                    {/*        radius={area.radius}*/}
+                    {/*        options={{*/}
+                    {/*            fillColor: 'rgba(255, 0, 0, 0.35)',*/}
+                    {/*            fillOpacity: 0.35,*/}
+                    {/*            strokeColor: 'rgba(255, 0, 0, 0.8)',*/}
+                    {/*            strokeWeight: 1,*/}
+                    {/*        }}*/}
+                    {/*    />*/}
+                    {/*))}*/}
+                    {selectedPlace && selectedPlace.geometry?.location && (
+                        <InfoWindow
+                            position={selectedPlace.geometry.location as google.maps.LatLng}
+                            onCloseClick={() => setSelectedPlace(null)}
+                        >
+                            <div>
+                                {selectedPlace.photos && selectedPlace.photos.length > 0 && (
+                                    <img
+                                        src={selectedPlace.photos[0].getUrl({maxWidth: 200, maxHeight: 200})}
+                                        alt={selectedPlace.name}
+                                        className="mb-2"
+                                    />
+                                )}
+                                <h2 className="text-lg font-semibold">{selectedPlace.name}</h2>
+                                <p>{selectedPlace.vicinity}</p>
+                                <p>{selectedPlace.formatted_address}</p>
+                            </div>
+                        </InfoWindow>
+                    )}
                 </GoogleMap>
-                <Header setSearchAddress={setSearchAddress} places={places} refetchFloodData={refetchFloodData}
-                        userLocation={userLocation}/>
+                <Header setSearchAddress={setSearchAddress} places={places} refetchFloodData={() => {
+                }} userLocation={userLocation} onPlaceClick={handlePlaceClick}/>
             </div>
         </div>
     )
