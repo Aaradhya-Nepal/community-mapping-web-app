@@ -2,8 +2,13 @@ import React from 'react';
 import {useGetWeatherData} from "@/queries/weather";
 import Loader from "@/components/loader/Loader";
 
-const WeatherCard = () => {
-    const {data: weatherData} = useGetWeatherData({lat: '27.6922', lon: '85.3246'})
+interface WeatherInfoProps {
+    latitude?: number;
+    longitude?: number;
+}
+
+const WeatherCard = ({latitude, longitude}: WeatherInfoProps) => {
+    const {data: weatherData} = useGetWeatherData({lat: latitude, lon: longitude})
 
     if (!weatherData) return <Loader/>;
 
@@ -16,7 +21,7 @@ const WeatherCard = () => {
     } = weatherData;
 
     return (
-        <div className="absolute bottom-0 right-5 bg-white rounded-lg shadow-lg p-6 w-80 z-10">
+        <div className="absolute top-12 bg-white rounded-lg shadow-lg p-6 w-80 z-10">
             <div className="flex justify-between items-center mb-4">
                 <div className="text-xl font-semibold text-gray-800">{name}</div>
                 <div className="text-red-500">High</div>

@@ -1,42 +1,21 @@
-"use client"
+"use client";
 
-import {useState, useEffect, useRef, useCallback} from "react"
-import {GoogleMap, useJsApiLoader, Marker, Circle} from "@react-google-maps/api"
-import {Button} from "@/components/ui/button"
-import {Card} from "@/components/ui/card"
-import {Waves, AlertTriangle} from "lucide-react"
-import SearchBar from "./SearchBar"
-import PlacesList from "./PlacesList"
-import FloodInfo from "./FloodInfo"
-import axios from "axios"
-import {useGetGeocode} from "@/queries/geocode";
-
-const libraries = ["places"]
-const mapCenter = {lat: 27.7172, lng: 85.3240}
-
-const mapStyles = [
-    {
-        featureType: "poi",
-        elementType: "labels",
-        stylers: [{visibility: "off"}]
-    },
-    {
-        featureType: "road",
-        elementType: "labels",
-        stylers: [{visibility: "off"}]
-    },
-    {
-        featureType: "landscape",
-        elementType: "labels",
-        stylers: [{visibility: "off"}]
-    }
-]
+import {useCallback, useEffect, useRef, useState} from "react"
+import {Circle, GoogleMap, Marker, useJsApiLoader} from "@react-google-maps/api"
+import {useGetGeocode} from "@/queries/geocode"
+import {useGetFloodData} from "@/queries/flood"
+import Loader from "@/components/loader/Loader"
+import Header from "@/components/maps/Header"
+import {libraries, mapProperties} from "@/components/maps/map-properties";
 
 export default function Map() {
     const [map, setMap] = useState<google.maps.Map | null>(null)
     const [places, setPlaces] = useState<google.maps.places.PlaceResult[]>([])
-    const [floodAreas, setFloodAreas] = useState<{ center: google.maps.LatLngLiteral, radius: number }[]>([])
     const [searchAddress, setSearchAddress] = useState("")
+    const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null)
+
+    const mapRef = useRef<google.maps.Map>()
+    const placesServiceRef = useRef<google.maps.places.PlacesService>()
 
     const {isLoaded} = useJsApiLoader({
         id: 'google-map-script',
@@ -45,9 +24,7 @@ export default function Map() {
     })
 
     const {data: geocodeData} = useGetGeocode(searchAddress, !!searchAddress)
-
-    const mapRef = useRef<google.maps.Map>()
-    const placesServiceRef = useRef<google.maps.places.PlacesService>()
+    const {data: floodData, refetch: refetchFloodData} = useGetFloodData()
 
     const onLoad = useCallback((map: google.maps.Map) => {
         mapRef.current = map
@@ -56,12 +33,12 @@ export default function Map() {
     }, [])
 
     const fetchPlaces = useCallback(() => {
-        if (!placesServiceRef.current) return;
+        if (!placesServiceRef.current || !userLocation) return;
 
-        const types = ['hospital', 'bus_station'];
+        const types = ['hospital', 'health', 'bus_station'];
         types.forEach(type => {
             const request = {
-                location: mapCenter,
+                location: userLocation,
                 radius: 5000,
                 type: type
             };
@@ -72,23 +49,30 @@ export default function Map() {
                 }
             });
         });
-    }, []);
-
-    const fetchFloodData = useCallback(async () => {
-        try {
-            const response = await axios.get('/api/floodData')
-            setFloodAreas(response.data)
-        } catch (error) {
-            console.error('Error fetching flood data:', error)
-        }
-    }, [])
+    }, [userLocation]);
 
     useEffect(() => {
-        if (map) {
-            fetchPlaces()
-            fetchFloodData()
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const {latitude, longitude} = position.coords;
+                    setUserLocation({lat: latitude, lng: longitude});
+                },
+                () => {
+                    setUserLocation({lat: 27.7172, lng: 85.3240});
+                }
+            );
+        } else {
+            setUserLocation({lat: 27.7172, lng: 85.3240});
         }
-    }, [map, fetchPlaces, fetchFloodData])
+    }, []);
+
+    useEffect(() => {
+        if (map && userLocation) {
+            map.panTo(userLocation);
+            fetchPlaces();
+        }
+    }, [map, userLocation, fetchPlaces]);
 
     useEffect(() => {
         if (geocodeData && map) {
@@ -101,68 +85,51 @@ export default function Map() {
         setMap(null)
     }, [])
 
+    if (!isLoaded) {
+        return <Loader/>
+    }
+
     return (
         <div className="h-screen flex flex-col">
             <div className="flex-1 relative">
-                {isLoaded ? (
-                    <GoogleMap
-                        mapContainerStyle={{width: '100%', height: '100%'}}
-                        center={mapCenter}
-                        zoom={14}
-                        onLoad={onLoad}
-                        onUnmount={onUnmount}
-                        options={{
-                            styles: mapStyles,
-                            disableDefaultUI: true,
-                            zoomControl: true,
-                        }}
-                    >
-                        {places.map((place, index) => (
-                            <Marker
-                                key={index}
-                                position={place.geometry?.location as google.maps.LatLng}
-                                icon={{
-                                    url: place.types?.includes('hospital') ? '/hospital-icon.png' : '/bus-icon.png',
-                                    scaledSize: new google.maps.Size(30, 30)
-                                }}
-                            />
-                        ))}
-                        {floodAreas.map((area, index) => (
-                            <Circle
-                                key={index}
-                                center={area.center}
-                                radius={area.radius}
-                                options={{
-                                    fillColor: 'rgba(255, 0, 0, 0.35)',
-                                    fillOpacity: 0.35,
-                                    strokeColor: 'rgba(255, 0, 0, 0.8)',
-                                    strokeWeight: 1,
-                                }}
-                            />
-                        ))}
-                    </GoogleMap>
-                ) : (
-                    <div>Loading...</div>
-                )}
-                <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                    <Card className="w-80">
-                        <SearchBar onSearch={setSearchAddress}/>
-                        <PlacesList places={places}/>
-                    </Card>
-                    <div className="flex flex-col gap-2 items-end">
-                        <div className="flex gap-2 w-[300px]">
-                            <Button variant="outline" className="bg-background w-full" onClick={fetchFloodData}>
-                                <Waves className="mr-2 h-4 w-4"/>
-                                Update Flood Data
-                            </Button>
-                            <Button variant="destructive">
-                                <AlertTriangle className="mr-2 h-4 w-4"/>
-                                Report
-                            </Button>
-                        </div>
-                        <FloodInfo floodAreas={floodAreas}/>
-                    </div>
-                </div>
+                <GoogleMap
+                    mapContainerStyle={{width: '100%', height: '100%'}}
+                    center={userLocation || {lat: 27.7172, lng: 85.3240}}
+                    zoom={14}
+                    onLoad={onLoad}
+                    onUnmount={onUnmount}
+                    options={{
+                        styles: mapProperties,
+                        disableDefaultUI: true,
+                        zoomControl: true,
+                    }}
+                >
+                    {places.map((place, index) => (
+                        <Marker
+                            key={index}
+                            position={place.geometry?.location as google.maps.LatLng}
+                            icon={{
+                                url: place.types?.includes('hospital') ? '/hospital-icon.png' : '/bus-icon.png',
+                                scaledSize: new google.maps.Size(30, 30)
+                            }}
+                        />
+                    ))}
+                    {floodData && floodData.map((area: any, index: number) => (
+                        <Circle
+                            key={index}
+                            center={area.center}
+                            radius={area.radius}
+                            options={{
+                                fillColor: 'rgba(255, 0, 0, 0.35)',
+                                fillOpacity: 0.35,
+                                strokeColor: 'rgba(255, 0, 0, 0.8)',
+                                strokeWeight: 1,
+                            }}
+                        />
+                    ))}
+                </GoogleMap>
+                <Header setSearchAddress={setSearchAddress} places={places} refetchFloodData={refetchFloodData}
+                        userLocation={userLocation}/>
             </div>
         </div>
     )
