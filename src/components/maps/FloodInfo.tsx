@@ -1,10 +1,10 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import {Card, CardHeader, CardTitle, CardContent} from "@/components/ui/card"
 
 interface FloodInfoProps {
     floodAreas: { center: google.maps.LatLngLiteral; radius: number }[]
 }
 
-export default function FloodInfo({ floodAreas }: FloodInfoProps) {
+export default function FloodInfo({floodAreas}: FloodInfoProps) {
     return (
         <Card className="w-[300px]">
             <CardHeader>
@@ -16,7 +16,7 @@ export default function FloodInfo({ floodAreas }: FloodInfoProps) {
             <CardContent>
                 <p className="text-sm text-muted-foreground">
                     {floodAreas.length} flood-affected areas detected. Exercise caution and follow local
-                    authorities' instructions.
+                    authorities&apos; instructions.
                 </p>
             </CardContent>
         </Card>
