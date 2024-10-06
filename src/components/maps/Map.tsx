@@ -58,7 +58,7 @@ export default function Map() {
         libraries: libraries as never
     });
 
-    const {data: floodData} = useGetFloodData({ coordinates: coordinates.slice(0, 5) });
+    const {data: floodData} = useGetFloodData({coordinates: coordinates.slice(0, 5)});
 
     const onLoad = useCallback((map: google.maps.Map) => {
         mapRef.current = map;
@@ -193,9 +193,9 @@ export default function Map() {
                             center={area.center}
                             radius={area.radius}
                             options={{
-                                fillColor: area.riskLevel === "high" ? 'rgba(255, 0, 0, 0.35)' : area.riskLevel === "medium" ? 'rgba(255, 165, 0, 0.35)' : 'rgba(0, 255, 0, 0.35)',
+                                fillColor: area.riskLevel === "high" ? 'rgba(0, 255, 0, 0.35)' : area.riskLevel === "medium" ? 'rgba(255, 165, 0, 0.35)' : 'rgba(255, 0, 0, 0.35)',
                                 fillOpacity: 0.35,
-                                strokeColor: area.riskLevel === "high" ? 'rgba(255, 0, 0, 0.8)' : area.riskLevel === "medium" ? 'rgba(255, 165, 0, 0.8)' : 'rgba(0, 255, 0, 0.8)',
+                                strokeColor: area.riskLevel === "high" ? 'rgba(0, 255, 0, 0.8)' : area.riskLevel === "medium" ? 'rgba(255, 165, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)',
                                 strokeWeight: 1,
                             }}
                         />
@@ -238,6 +238,10 @@ export default function Map() {
                         <div className="w-4 h-4 bg-green-500 mr-2"></div>
                         <span className="text-xs">Low Risk</span>
                     </div>
+                </div>
+                <div
+                    className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-white p-1 rounded shadow text-xs">
+                    &copy; Astro Nerds
                 </div>
             </div>
         </div>
