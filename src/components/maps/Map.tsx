@@ -2,7 +2,6 @@
 
 import {useCallback, useEffect, useRef, useState} from "react"
 import {Circle, GoogleMap, InfoWindow, Marker, useJsApiLoader} from "@react-google-maps/api"
-import {useGetGeocode} from "@/queries/geocode"
 import Loader from "@/components/loader/Loader"
 import Header from "@/components/maps/Header"
 import {libraries, mapProperties} from "@/components/maps/map-properties";
@@ -33,7 +32,6 @@ const calculateFloodRisk = (floodData: any) => {
 export default function Map() {
     const [map, setMap] = useState<google.maps.Map | null>(null)
     const [places, setPlaces] = useState<google.maps.places.PlaceResult[]>([])
-    const [searchAddress, setSearchAddress] = useState("")
     const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null)
     const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
 
@@ -46,7 +44,6 @@ export default function Map() {
         libraries: libraries as never
     })
 
-    const {data: geocodeData} = useGetGeocode(searchAddress, !!searchAddress)
     const {data: floodData} = useGetFloodData({
         latitude: userLocation?.lat ?? '27.7172',
         longitude: userLocation?.lng ?? '85.3240'
@@ -104,13 +101,6 @@ export default function Map() {
             fetchPlaces();
         }
     }, [map, userLocation, fetchPlaces]);
-
-    useEffect(() => {
-        if (geocodeData && map) {
-            const {lat, lng} = geocodeData.results[0].geometry.location
-            map.panTo({lat, lng})
-        }
-    }, [geocodeData, map])
 
     const onUnmount = useCallback(() => {
         setMap(null)
@@ -182,8 +172,8 @@ export default function Map() {
                         </InfoWindow>
                     )}
                 </GoogleMap>
-                <Header setSearchAddress={setSearchAddress} places={places} refetchFloodData={() => {
-                }} userLocation={userLocation} onPlaceClick={handlePlaceClick}/>
+                <Header places={places} userLocation={userLocation} onPlaceClick={handlePlaceClick}
+                        riskAreas={riskAreas}/>
             </div>
         </div>
     )
