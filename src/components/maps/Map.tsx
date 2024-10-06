@@ -12,7 +12,7 @@ const calculateFloodRisk = (floodData: any) => {
     return floodData.daily.time.map((date: string, index: number) => {
         const discharge = floodData.daily.river_discharge_seamless_v4[index];
         let riskLevel = "low";
-        let radius = discharge * 100;
+        const radius = discharge * 100;
 
         if (discharge > 10) {
             riskLevel = "high";
@@ -224,7 +224,7 @@ export default function Map() {
                 </GoogleMap>
                 <Header places={places} userLocation={userLocation} onPlaceClick={handlePlaceClick}
                         riskAreas={riskAreas}/>
-                <div className="absolute bottom-4 left-4 bg-white p-2 rounded shadow">
+                <div className="absolute bottom-6 right-14 bg-white p-2 rounded shadow">
                     <h3 className="text-sm font-semibold">Risk Levels</h3>
                     <div className="flex items-center mt-2">
                         <div className="w-4 h-4 bg-red-500 mr-2"></div>
