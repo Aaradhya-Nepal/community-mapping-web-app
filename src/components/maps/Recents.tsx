@@ -3,7 +3,30 @@ import {ScrollArea} from "@/components/ui/scroll-area";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import Image from "next/image";
 
-const Recents = ({recentData}: any) => {
+interface Thumbnail {
+    url: string;
+}
+
+interface Snippet {
+    title: string;
+    description: string;
+    thumbnails: {
+        default: Thumbnail;
+    };
+}
+
+interface Item {
+    id: {
+        videoId: string;
+    };
+    snippet: Snippet;
+}
+
+interface RecentData {
+    items: Item[];
+}
+
+const Recents = ({recentData}: { recentData: RecentData }) => {
     return (
         <>
             <Card className="shadow-none border-none">
@@ -12,7 +35,7 @@ const Recents = ({recentData}: any) => {
                 </CardHeader>
                 <CardContent>
                     <ScrollArea className="h-[200px]">
-                        {recentData.items.map((item: any, index: number) => (
+                        {recentData.items.map((item: Item, index: number) => (
                             <div key={index} className="mb-4">
                                 <p className="text-base font-medium text-gray-800">
                                     {item.snippet.title}
