@@ -15,9 +15,9 @@ export default function FloodInfo({floodAreas}: FloodInfoProps) {
     return (
         <Card className="w-[320px] absolute top-60 right-0">
             <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center justify-between">
                     <span className="mr-2">Flood Information</span>
-                    <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">High Risk</span>
+                    <span className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded">High Risk</span>
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -27,7 +27,7 @@ export default function FloodInfo({floodAreas}: FloodInfoProps) {
                         authorities&apos; instructions.
                     </p>
                     {floodAreas.map((area, index) => (
-                        <div key={index} className="mt-4">
+                        <div key={index} className="mt-6 flex flex-col gap-1">
                             <p className="text-sm"><strong>Date:</strong> {area.date}</p>
                             <p className="text-sm"><strong>Discharge:</strong> {area.discharge} m³/s</p>
                             <p className="text-sm"><strong>Risk Level:</strong> {area.riskLevel}</p>

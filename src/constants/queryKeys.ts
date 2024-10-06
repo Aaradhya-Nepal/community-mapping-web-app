@@ -3,5 +3,7 @@ const QUERY_KEYS = {
     geocodes: 'geocodes',
     floods: 'floods',
     weathers: 'weathers',
+    news: 'news',
+    youtube: 'youtube',
 };
 export default QUERY_KEYS;
