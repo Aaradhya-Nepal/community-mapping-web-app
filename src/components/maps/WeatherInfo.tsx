@@ -8,7 +8,10 @@ interface WeatherInfoProps {
 }
 
 const WeatherCard = ({latitude, longitude}: WeatherInfoProps) => {
-    const {data: weatherData} = useGetWeatherData({latitude: latitude, longitude: longitude});
+    const {data: weatherData} = useGetWeatherData({
+        latitude: latitude ?? 0,
+        longitude: longitude ?? 0
+    });
 
     if (!weatherData) return <Loader/>;
 
