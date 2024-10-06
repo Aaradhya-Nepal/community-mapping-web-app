@@ -19,7 +19,7 @@ const WeatherCard = ({ latitude, longitude }: WeatherInfoProps) => {
     } = weatherData;
 
     return (
-        <div className="absolute top-12 bg-white rounded-lg shadow-lg p-6 w-80 z-10">
+        <div className="absolute top-0 bg-white rounded-lg shadow-lg p-6 w-80 z-10">
             <div className="flex justify-between items-center mb-4">
                 <div className="text-xl font-semibold text-gray-800">Weather Info</div>
                 <div className="text-red-500">High</div>

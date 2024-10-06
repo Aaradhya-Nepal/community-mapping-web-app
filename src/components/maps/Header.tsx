@@ -3,8 +3,6 @@
 import React from 'react';
 import {Card} from "@/components/ui/card";
 import PlacesList from "@/components/maps/PlacesList";
-import {Button} from "@/components/ui/button";
-import {AlertTriangle} from "lucide-react";
 import FloodInfo from "@/components/maps/FloodInfo";
 import WeatherInfo from "@/components/maps/WeatherInfo";
 import NewsPanel from "@/components/maps/NewsPanel";
@@ -26,10 +24,6 @@ const Header = ({
                 {recent && (<Recents recentData={recent}/>)}
             </Card>
             <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
-                <Button variant="destructive">
-                    <AlertTriangle className="mr-2 h-4 w-4"/>
-                    Report
-                </Button>
                 {riskAreas && riskAreas.length > 0 && (<FloodInfo floodAreas={riskAreas}/>)}
                 {userLocation && (
                     <WeatherInfo latitude={userLocation.lat} longitude={userLocation.lng}/>

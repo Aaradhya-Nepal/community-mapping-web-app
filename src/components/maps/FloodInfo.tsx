@@ -13,7 +13,7 @@ interface FloodInfoProps {
 
 export default function FloodInfo({floodAreas}: FloodInfoProps) {
     return (
-        <Card className="w-[320px] absolute top-72 right-0">
+        <Card className="w-[320px] absolute top-60 right-0">
             <CardHeader>
                 <CardTitle className="flex items-center">
                     <span className="mr-2">Flood Information</span>

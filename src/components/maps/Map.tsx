@@ -1,9 +1,9 @@
 "use client";
 
-import {useCallback, useEffect, useRef, useState} from "react"
-import {Circle, GoogleMap, InfoWindow, Marker, useJsApiLoader} from "@react-google-maps/api"
-import Loader from "@/components/loader/Loader"
-import Header from "@/components/maps/Header"
+import {useCallback, useEffect, useRef, useState} from "react";
+import {Circle, GoogleMap, InfoWindow, Marker, useJsApiLoader} from "@react-google-maps/api";
+import Loader from "@/components/loader/Loader";
+import Header from "@/components/maps/Header";
 import {libraries, mapProperties} from "@/components/maps/map-properties";
 import {useGetFloodData} from "@/queries/flood";
 import Image from "next/image";
@@ -12,6 +12,7 @@ const calculateFloodRisk = (floodData: any) => {
     return floodData.daily.time.map((date: string, index: number) => {
         const discharge = floodData.daily.river_discharge_seamless_v4[index];
         let riskLevel = "low";
+        let radius = discharge * 100;
 
         if (discharge > 10) {
             riskLevel = "high";
@@ -24,36 +25,82 @@ const calculateFloodRisk = (floodData: any) => {
             discharge,
             riskLevel,
             center: {lat: floodData.latitude, lng: floodData.longitude},
-            radius: discharge * 100
+            radius
         };
     });
 };
 
-export default function Map() {
-    const [map, setMap] = useState<google.maps.Map | null>(null)
-    const [places, setPlaces] = useState<google.maps.places.PlaceResult[]>([])
-    const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null)
-    const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
+const generateRandomCoordinates = (center: google.maps.LatLngLiteral, radius: number, count: number) => {
+    const coordinates = [];
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * radius;
+        const latitude = center.lat + (distance * Math.cos(angle)) / 111000;
+        const longitude = center.lng + (distance * Math.sin(angle)) / (111000 * Math.cos(center.lat * (Math.PI / 180)));
+        coordinates.push({latitude, longitude});
+    }
+    return coordinates;
+};
 
-    const mapRef = useRef<google.maps.Map>()
-    const placesServiceRef = useRef<google.maps.places.PlacesService>()
+export default function Map() {
+    const [map, setMap] = useState<google.maps.Map | null>(null);
+    const [places, setPlaces] = useState<google.maps.places.PlaceResult[]>([]);
+    const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null);
+    const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
+    const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number }[]>([]);
+
+    const mapRef = useRef<google.maps.Map>();
+    const placesServiceRef = useRef<google.maps.places.PlacesService>();
 
     const {isLoaded} = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY!,
         libraries: libraries as never
-    })
+    });
 
-    const {data: floodData} = useGetFloodData({
-        latitude: userLocation?.lat ?? '27.7172',
-        longitude: userLocation?.lng ?? '85.3240'
-    })
+    const {data: floodData} = useGetFloodData({ coordinates: coordinates.slice(0, 5) });
 
     const onLoad = useCallback((map: google.maps.Map) => {
-        mapRef.current = map
-        setMap(map)
-        placesServiceRef.current = new google.maps.places.PlacesService(map)
-    }, [])
+        mapRef.current = map;
+        setMap(map);
+        placesServiceRef.current = new google.maps.places.PlacesService(map);
+    }, []);
+
+    const fetchVulnerablePlaces = useCallback(async () => {
+        if (!placesServiceRef.current) return;
+
+        const types = ['hospital', 'health', 'bus_station'];
+        const vulnerablePlaces: { latitude: number; longitude: number }[] = [];
+
+        for (const type of types) {
+            const request = {
+                location: userLocation,
+                radius: 5000,
+                type: type
+            };
+
+            const results = await new Promise<google.maps.places.PlaceResult[]>((resolve, reject) => {
+                placesServiceRef.current!.nearbySearch(request, (results, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                        resolve(results);
+                    } else {
+                        reject(status);
+                    }
+                });
+            });
+
+            results.forEach(place => {
+                if (place.geometry?.location) {
+                    vulnerablePlaces.push({
+                        latitude: place.geometry.location.lat(),
+                        longitude: place.geometry.location.lng()
+                    });
+                }
+            });
+        }
+
+        setCoordinates(vulnerablePlaces);
+    }, [userLocation]);
 
     const fetchPlaces = useCallback(() => {
         if (!placesServiceRef.current || !userLocation) return;
@@ -99,18 +146,21 @@ export default function Map() {
         if (map && userLocation) {
             map.panTo(userLocation);
             fetchPlaces();
+            fetchVulnerablePlaces();
+            const randomCoordinates = generateRandomCoordinates(userLocation, 10000, 30);
+            setCoordinates(randomCoordinates);
         }
-    }, [map, userLocation, fetchPlaces]);
+    }, [map, userLocation, fetchPlaces, fetchVulnerablePlaces]);
 
     const onUnmount = useCallback(() => {
-        setMap(null)
-    }, [])
+        setMap(null);
+    }, []);
 
     if (!isLoaded) {
-        return <Loader/>
+        return <Loader/>;
     }
 
-    const riskAreas = floodData && floodData ? calculateFloodRisk(floodData) : [];
+    const riskAreas = floodData ? floodData.flatMap(calculateFloodRisk) : [];
 
     return (
         <div className="h-screen flex flex-col">
@@ -174,7 +224,22 @@ export default function Map() {
                 </GoogleMap>
                 <Header places={places} userLocation={userLocation} onPlaceClick={handlePlaceClick}
                         riskAreas={riskAreas}/>
+                <div className="absolute bottom-4 left-4 bg-white p-2 rounded shadow">
+                    <h3 className="text-sm font-semibold">Risk Levels</h3>
+                    <div className="flex items-center mt-2">
+                        <div className="w-4 h-4 bg-red-500 mr-2"></div>
+                        <span className="text-xs">High Risk</span>
+                    </div>
+                    <div className="flex items-center mt-2">
+                        <div className="w-4 h-4 bg-orange-500 mr-2"></div>
+                        <span className="text-xs">Medium Risk</span>
+                    </div>
+                    <div className="flex items-center mt-2">
+                        <div className="w-4 h-4 bg-green-500 mr-2"></div>
+                        <span className="text-xs">Low Risk</span>
+                    </div>
+                </div>
             </div>
         </div>
-    )
+    );
 }
