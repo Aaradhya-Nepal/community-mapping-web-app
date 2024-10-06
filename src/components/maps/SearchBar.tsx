@@ -16,7 +16,7 @@ export default function SearchBar({onSearch}: SearchBarProps) {
             <CardTitle className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground"/>
                 <Input
-                    placeholder="Search Location"
+                    placeholder="Location Nearby"
                     className="pl-8"
                     onChange={handleInputChange}
                 />
