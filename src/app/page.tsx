@@ -1,7 +1,7 @@
-export default function Home() {
+import Map from "@/components/maps/Map";
+
+export default function Page() {
     return (
-        <div>
-            Map page
-        </div>
+        <Map/>
     );
 }
