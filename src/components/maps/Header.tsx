@@ -9,11 +9,7 @@ import NewsPanel from "@/components/maps/NewsPanel";
 import Recents from "@/components/maps/Recents";
 import {useGetNews} from "@/queries/news";
 import {useGetYoutubeVideos} from "@/queries/youtube";
-
-interface Place {
-    id: string;
-    name: string;
-}
+import PlaceResult = google.maps.places.PlaceResult;
 
 interface Location {
     lat: number;
@@ -21,7 +17,7 @@ interface Location {
 }
 
 interface HeaderProps {
-    places: Place[];
+    places: PlaceResult[];
     userLocation: Location;
     onPlaceClick: (place: google.maps.places.PlaceResult) => void;
     riskAreas: {

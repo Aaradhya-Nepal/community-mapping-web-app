@@ -7,8 +7,26 @@ import Header from "@/components/maps/Header";
 import {libraries, mapProperties} from "@/components/maps/map-properties";
 import {useGetFloodData} from "@/queries/flood";
 import Image from "next/image";
+import {v4 as uuidv4} from 'uuid';
 
-const calculateFloodRisk = (floodData: any) => {
+interface FloodData {
+    daily: {
+        time: string[];
+        river_discharge_seamless_v4: number[];
+    };
+    latitude: number;
+    longitude: number;
+}
+
+interface RiskArea {
+    date: string;
+    discharge: number;
+    riskLevel: string;
+    center: google.maps.LatLngLiteral;
+    radius: number;
+}
+
+const calculateFloodRisk = (floodData: FloodData): RiskArea[] => {
     return floodData.daily.time.map((date: string, index: number) => {
         const discharge = floodData.daily.river_discharge_seamless_v4[index];
         let riskLevel = "low";
@@ -46,7 +64,7 @@ export default function Map() {
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [places, setPlaces] = useState<google.maps.places.PlaceResult[]>([]);
     const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null);
-    const [selectedPlace, setSelectedPlace] = useState<any | null>(null);
+    const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
     const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number }[]>([]);
 
     const mapRef = useRef<google.maps.Map>();
@@ -67,14 +85,14 @@ export default function Map() {
     }, []);
 
     const fetchVulnerablePlaces = useCallback(async () => {
-        if (!placesServiceRef.current) return;
+        if (!placesServiceRef.current || !userLocation) return;
 
         const types = ['hospital', 'health', 'bus_station'];
         const vulnerablePlaces: { latitude: number; longitude: number }[] = [];
 
         for (const type of types) {
             const request = {
-                location: userLocation,
+                location: userLocation as google.maps.LatLngLiteral,
                 radius: 5000,
                 type: type
             };
@@ -115,7 +133,11 @@ export default function Map() {
 
             placesServiceRef.current!.nearbySearch(request, (results, status) => {
                 if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                    setPlaces(prevPlaces => [...prevPlaces, ...results]);
+                    const mappedPlaces = results.map(place => ({
+                        id: uuidv4(),
+                        name: place.name || 'Unknown Place'
+                    }));
+                    setPlaces(prevPlaces => [...prevPlaces, ...mappedPlaces]);
                 }
             });
         });
@@ -123,7 +145,9 @@ export default function Map() {
 
     const handlePlaceClick = (place: google.maps.places.PlaceResult) => {
         setSelectedPlace(place);
-        map?.panTo(place.geometry?.location!);
+        if (place.geometry?.location) {
+            map?.panTo(place.geometry.location);
+        }
     };
 
     useEffect(() => {
@@ -187,7 +211,7 @@ export default function Map() {
                             }}
                         />
                     ))}
-                    {riskAreas.map((area: any, index: number) => (
+                    {riskAreas.map((area: RiskArea, index: number) => (
                         <Circle
                             key={index}
                             center={area.center}
@@ -211,7 +235,7 @@ export default function Map() {
                                         width={120}
                                         height={20}
                                         src={selectedPlace.photos[0].getUrl({maxWidth: 200, maxHeight: 200})}
-                                        alt={selectedPlace.name}
+                                        alt={selectedPlace.name || 'Unknown Place'}
                                         className="mb-2"
                                     />
                                 )}
@@ -222,8 +246,12 @@ export default function Map() {
                         </InfoWindow>
                     )}
                 </GoogleMap>
-                <Header places={places} userLocation={userLocation} onPlaceClick={handlePlaceClick}
-                        riskAreas={riskAreas}/>
+                <Header
+                    places={places}
+                    userLocation={userLocation || {lat: 0, lng: 0}}
+                    onPlaceClick={handlePlaceClick}
+                    riskAreas={riskAreas}
+                />
                 <div className="absolute bottom-6 right-14 bg-white p-2 rounded shadow">
                     <h3 className="text-sm font-semibold">Risk Levels</h3>
                     <div className="flex items-center mt-2">
