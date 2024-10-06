@@ -4,7 +4,18 @@ import React from "react";
 import Image from "next/image";
 import Loader from "@/components/loader/Loader";
 
-export default function NewsPanel({newsData}: any) {
+interface Article {
+    urlToImage: string | null;
+    title: string;
+    description: string;
+    url: string;
+}
+
+interface NewsData {
+    articles: Article[];
+}
+
+export default function NewsPanel({newsData}: { newsData: NewsData }) {
     if (!newsData) return <Loader/>;
 
     return (
@@ -14,7 +25,7 @@ export default function NewsPanel({newsData}: any) {
             </CardHeader>
             <CardContent>
                 <ScrollArea className="h-[200px]">
-                    {newsData.articles.map((item: any, index: number) => (
+                    {newsData.articles.map((item: Article, index: number) => (
                         <div key={index} className="mb-4">
                             <Image
                                 className=" h-4 w-4 rounded-full"
