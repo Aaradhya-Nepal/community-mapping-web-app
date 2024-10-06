@@ -168,6 +168,8 @@ export default function Map() {
                             <div>
                                 {selectedPlace.photos && selectedPlace.photos.length > 0 && (
                                     <Image
+                                        width={120}
+                                        height={20}
                                         src={selectedPlace.photos[0].getUrl({maxWidth: 200, maxHeight: 200})}
                                         alt={selectedPlace.name}
                                         className="mb-2"
