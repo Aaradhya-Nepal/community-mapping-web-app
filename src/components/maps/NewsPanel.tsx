@@ -18,7 +18,9 @@ export default function NewsPanel({newsData}: any) {
                         <div key={index} className="mb-4">
                             <Image
                                 className=" h-4 w-4 rounded-full"
-                                src={item.image}
+                                src={item.urlToImage ?? ''}
+                                width={200}
+                                height={200}
                                 alt={item.title}
                             />
                             <h3 className="font-semibold">{item.title}</h3>

@@ -18,7 +18,6 @@ const Header = ({
                 }: any) => {
     const {data: news} = useGetNews();
     const {data: youtube} = useGetYoutubeVideos();
-    console.log("youtube data", youtube);
     return (
         <>
             <Card className="w-80 absolute top-4 left-4">

@@ -4,7 +4,6 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import Image from "next/image";
 
 const Recents = ({recentData}: any) => {
-    console.log(recentData);
     return (
         <>
             <Card className="shadow-none border-none">
