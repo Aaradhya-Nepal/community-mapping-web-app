@@ -66,6 +66,8 @@ export default function Map() {
     const [userLocation, setUserLocation] = useState<google.maps.LatLngLiteral | null>(null);
     const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
     const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number }[]>([]);
+    const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+    const inputRef = useRef<HTMLInputElement | null>(null);
 
     const mapRef = useRef<google.maps.Map>();
     const placesServiceRef = useRef<google.maps.places.PlacesService>();
@@ -180,6 +182,23 @@ export default function Map() {
         setMap(null);
     }, []);
 
+    useEffect(() => {
+        if (isLoaded && inputRef.current) {
+            autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current);
+            autocompleteRef.current.addListener("place_changed", () => {
+                const place = autocompleteRef.current!.getPlace();
+                if (place.geometry?.location) {
+                    const location = {
+                        lat: place.geometry.location.lat(),
+                        lng: place.geometry.location.lng()
+                    };
+                    setUserLocation(location);
+                    map?.panTo(location);
+                }
+            });
+        }
+    }, [isLoaded]);
+
     if (!isLoaded) {
         return <Loader/>;
     }
@@ -189,6 +208,12 @@ export default function Map() {
     return (
         <div className="h-screen flex flex-col">
             <div className="flex-1 relative">
+                <input
+                    type="text"
+                    ref={inputRef}
+                    placeholder="Search for a location"
+                    className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 p-2 border rounded"
+                />
                 <GoogleMap
                     mapContainerStyle={{width: '100%', height: '100%'}}
                     center={userLocation || {lat: 27.7172, lng: 85.3240}}
